@@ -1,0 +1,7 @@
+.devcontainer/
+.vscode/
+build/
+managed_components/
+dependencies.lock
+pytest_coap_client_example.py
+sdkconfig.*
