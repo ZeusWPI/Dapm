@@ -1,16 +1,22 @@
-#include <stdint.h>
-#include <unistd.h>
+// No touching the includes :O !!!!!!!
 #include <string.h>
-
-#include "nvs_flash.h"
+#include <sys/socket.h>
+#include <netdb.h>
+#include <sys/param.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
 
 #include "protocol_examples_common.h"
 
-#include "esp_wifi.h"
 #include "esp_log.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+
+#include "nvs_flash.h"
+
+#include "coap3/coap.h"
 
 #include "types.h"
 #include "types_coap.h"

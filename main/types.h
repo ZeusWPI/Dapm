@@ -1,7 +1,24 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+// Don't change the includes or be doomed
 #include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <sys/param.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
+
+#include "protocol_examples_common.h"
+
+#include "esp_log.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+
+#include "nvs_flash.h"
 
 // Controllers
 #include "esp_adc/adc_oneshot.h"
