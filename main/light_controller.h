@@ -3,22 +3,33 @@
 
 #include <stdint.h>
 
-#include "types.h"
-#include "controller.h"
-#include "light.h"
+#include "esp_adc/adc_oneshot.h"
+
+#include "globals.h"
+#include "light_controller_manager.h"
+
+
+typedef struct LightController {
+    Controller controller;
+    Light* lights;
+    uint8_t amountOfLights;
+    int minDifference;          // Minimum difference in ADC value before updating the lights
+    int64_t lastUpdated;
+    char** lightUris;           // All uri's for the lights
+} LightController;
 
 
 Result initLightController(
     LightController* lightController,
     const adc_channel_t channel, 
-    const adc_unit_t unit,
-    const uint8_t amount_of_uris,
+    const adc_oneshot_unit_handle_t* handle,
     const bool isLight,
-    char** server_uris
+    const uint8_t amountOfUris,
+    const char** serverUris
 );
 
 // Get new adc and update the light value
-void updateLightController(LightController* lightController);
+void updateLightController(LightControllerManager* manager, LightController* lightController);
 
 void freeLightController(LightController* LightController);
 

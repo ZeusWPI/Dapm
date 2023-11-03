@@ -13,6 +13,7 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
+#include "esp_timer.h"
 
 #include "nvs_flash.h"
 
@@ -32,18 +33,23 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+    // Start timer
+    ESP_ERROR_CHECK(esp_timer_early_init());
+
     // Connect to wifi
-    // wifiConnected = false;
-    // wifiConnect();
+    wifiConnected = false;
+    wifiConnect();
 
-    // while (! wifiConnected) {
-    //     sleep(1);
-    // }
+    while (! wifiConnected) {
+        sleep(1);
+    }
 
-    ESP_ERROR_CHECK(example_connect());
-    wifiConnected = true;
-
-    // esp_wifi_init(WIFI_INIT_CONFIG_DEFAULT);
+    // Initiate adc handle
+    adc_oneshot_unit_handle_t   handle;
+    adc_oneshot_unit_init_cfg_t init_cfg = {
+        .unit_id = ADC_UNIT_1
+    };
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_cfg, &handle));
 
     // Construct all light controllers
     LightController* lightControllers = malloc(sizeof(LightController) * AMOUNT_OF_LIGHT_CONTROLLERS);
@@ -54,32 +60,32 @@ void app_main(void) {
     }
 
     // 1
-    char** uris = malloc(sizeof(char*) * 2);
+    char** uris = malloc(sizeof(char*) * 1);
     uris[0] = malloc(sizeof(char) * 40);
-    snprintf(uris[0], 40, "%s%d/%d", COAP_URI, DEVICES, VOORRAAD);
-    uris[1] = malloc(sizeof(char) * 40);
-    snprintf(uris[1], 40, "%s%d/%d", COAP_URI, DEVICES, DEUR);
+    snprintf(uris[0], 40, "%s%d/%d", COAP_URI, DEVICES, GROTE_TAFEL);
+    // uris[1] = malloc(sizeof(char) * 40);
+    // snprintf(uris[1], 40, "%s%d/%d", COAP_URI, DEVICES, DEUR);
     initLightController(
         &lightControllers[0],
         ADC_CHANNEL_0,
-        ADC_UNIT_1,
-        2,
+        &handle,
+        1,
         true,
         uris
     );
 
     // 2
-    // char** uris2 = malloc(sizeof(char*) * 1);
-    // uris2[0] = malloc(sizeof(char) * 40);
-    // snprintf(uris2[0], 40, "%s%d/%d", COAP_URI, DEVICES, GROTE_TAFEL);
-    // initLightController(
-    //     &lightControllers[1],
-    //     ADC_CHANNEL_7,
-    //     ADC_UNIT_1,
-    //     1,
-    //     true,
-    //     uris2
-    // );
+    char** uris2 = malloc(sizeof(char*) * 1);
+    uris2[0] = malloc(sizeof(char) * 40);
+    snprintf(uris2[0], 40, "%s%d/%d", COAP_URI, DEVICES, KASTENHOEK);
+    initLightController(
+        &lightControllers[1],
+        ADC_CHANNEL_1,
+        &handle,
+        1,
+        true,
+        uris2
+    );
 
     // 3
 
@@ -94,7 +100,7 @@ void app_main(void) {
     // 8
 
 
-    // Infinite loop to get rotating thing positions and adjust light bulbs
+    // Infinite loop to get potentiometers positions and adjust light bulbs
     while (1) {
         for (uint8_t i = 0; i < AMOUNT_OF_LIGHT_CONTROLLERS; i++) {
             updateLightController(&(lightControllers[i]));

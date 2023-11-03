@@ -35,7 +35,7 @@
 #define WIFI_SSID                   "Zeus WPI"
 #define WIFI_PASSWORD               "zeusisdemax"
 
-#define ADC_MAX                     4095    // Maximum ADC value
+#define ADC_MAX                     8191    // Maximum ADC value
 #define ADC_MIN                     0       // Minimum ADC value
 #define LIGHT_MAX                   255     // Maximum light value
 #define LIGHT_MIN                   0       // Minimum light value
@@ -64,17 +64,7 @@ typedef struct Light {
     coap_context_t* ctx;
     coap_session_t* session;
     coap_optlist_t* optlist;
+    uint8_t id;
 } Light;
-
-typedef struct LightController {
-    Controller controller;
-    Light* lights;
-    uint8_t amountOfLights;
-    int minDifference;          // Minimum difference in ADC value before updating the lights
-    int previousAdc;            // Previous adc
-    uint16_t skipped;           // Amount of times in a row no data was send to a light
-    uint16_t maxSkipped;        // Maximum times a light update can be skipped in a row before sending keep alive
-    char** lightUris;           // All uri's for the lights
-} LightController;
 
 #endif

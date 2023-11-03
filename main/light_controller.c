@@ -19,13 +19,13 @@ uint8_t convertAdcToLight(int adc);
 Result initLightController(
     LightController* lightController,
     const adc_channel_t channel, 
-    const adc_unit_t unit,
-    const uint8_t amountOfUris,
+    const adc_oneshot_unit_handle_t* handle,
     const bool isLight,
+    const uint8_t amountOfUris,
     char** lightUris
 ) {
     // Allocate Controller
-    Result result = initController(&lightController->controller, channel, unit);
+    Result result = initController(&lightController->controller, channel, handle);
 
     if (result != OK) {
         return result;
@@ -56,16 +56,12 @@ Result initLightController(
 
     lightController->amountOfLights = amountOfUris;
 
-    lightController->previousAdc = 0;
-
     // Avoid float number for faster calculation
     int minDifference = (unsigned int) ((LIGHT_CHANGE - LIGHT_MIN) * (ADC_MAX - ADC_MIN)) / (LIGHT_MAX - LIGHT_MIN) + ADC_MIN;
     lightController->minDifference = minDifference;
 
     // This way of calculating when to send a keep alive message will result in sending it a bit less often than specified in SEND_ALIVE_S
     // However it's much faster than getting the current time every time
-    uint16_t maxSkipped = SEND_ALIVE_S * 1000 / WAIT_MS;
-    lightController->maxSkipped = maxSkipped;
 
     lightController->lightUris = lightUris;
 
@@ -88,7 +84,7 @@ void updateLightController(LightController* lightController) {
 
         // Update all lights
         for (uint8_t i = 0; i < lightController->amountOfLights; i++) {
-            ESP_LOGI(TAG, "Amount of llights: %d, current %d", lightController->amountOfLights, i);
+            ESP_LOGI(TAG, "Amount of lights: %d, current %d", lightController->amountOfLights, i);
             uint8_t newBrightness = convertAdcToLight(lightController->controller.adc_raw);
             Result result = updateBrightness(&lightController->lights[i], newBrightness);
             if (result == SEND_ERROR && wifiConnected) {
