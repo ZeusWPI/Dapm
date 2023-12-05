@@ -1,0 +1,14 @@
+{
+    "coap_ip": "10.0.0.9",
+    "coap_port": "5684",
+    "coap_key": "RkXN9tg54IbYpwdb",
+    "coap_identity": "da02bc820efd415697f44330fbba17e1",
+    "coap_kelder": "/15004/131077",
+    "coap_random_led": "/15001/65561",
+    "coap_retries": 3,
+
+    "blink_multiplier": 0.7,
+    "blink_amount": 2,
+
+    "web_port": "8080"
+}
