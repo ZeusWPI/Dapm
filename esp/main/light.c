@@ -22,7 +22,6 @@ Result updateBrightness(Light* light, uint8_t brightness) {
     char data[50];
 
     int snprintf_result;
-    ESP_LOGI(TAG, "Is light %hd", light->isLight);
     if (light->isLight) {
         snprintf_result = snprintf(data, sizeof(data), "{\"light\": %ld, \"brightness\": %hd}", light->id, brightness);
     } else {

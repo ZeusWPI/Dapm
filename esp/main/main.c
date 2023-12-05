@@ -66,10 +66,10 @@ void app_main(void) {
         abort();
     }
 
-    uint32_t lightOne[] = {65546};
-    uint32_t lightTwo[] = {65547};
-    uint32_t lightThree[] = {65556};
-    uint32_t lightFour[] = {131077};
+    uint32_t lightOne[] = {65575};
+    uint32_t lightTwo[] = {65575};
+    uint32_t lightThree[] = {65575};
+    uint32_t lightFour[] = {65575};
 
     // 1
     initLightController(
@@ -111,7 +111,7 @@ void app_main(void) {
         &handle,
         1,
         lightFour,
-        false,
+        true,
         httpClientGroup
     );
 

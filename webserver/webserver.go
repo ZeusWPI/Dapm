@@ -49,19 +49,10 @@ func ledHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channel := make(chan bool)
+	go led(&content)
 
-	go led(&content, channel)
-
-	result := <-channel
-
-	if result {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Led changed\n"))
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error while changing led brightness\n"))
-	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Led changed\n"))
 }
 
 func groupHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,19 +62,10 @@ func groupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channel := make(chan bool)
+	go group(&content)
 
-	go group(&content, channel)
-
-	result := <-channel
-
-	if result {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Group changed\n"))
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error while changing group brightness\n"))
-	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Group changed\n"))
 }
 
 func blinkHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,19 +74,10 @@ func blinkHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channel := make(chan bool)
+	go blink()
 
-	go blink(channel)
-
-	result := <-channel
-
-	if result {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("On Off On Off ...\n"))
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error while blinking \n"))
-	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("On Off On Off ...\n"))
 }
 
 func initWebserver() {

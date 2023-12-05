@@ -48,7 +48,7 @@ func changeBrightness(path string, payload string) (err error) {
 		bytes.NewReader([]byte(payload)),
 	)
 
-    time.Sleep(200 * time.Millisecond)
+    // time.Sleep(200 * time.Millisecond)
 
 	globals.mu.Unlock()
 
@@ -106,10 +106,9 @@ func getBrightness(path string) (number int, err error) {
 	return
 }
 
-func blink(channel chan bool) {
+func blink() {
 	brightness, err := getBrightness(conf.CoapRandomLed)
 	if checkNonFatal(err) {
-		channel <- false
 		return
 	}
 
@@ -118,7 +117,6 @@ func blink(channel chan bool) {
 
 		if checkNonFatal(err) {
 			changeBrightnessRetries(conf.CoapKelder, fmt.Sprintf(`{"5851": %d}`, brightness))
-			channel <- false
 			return
 		}
 
@@ -127,32 +125,17 @@ func blink(channel chan bool) {
 
 		if checkNonFatal(err) {
 			changeBrightnessRetries(conf.CoapKelder, fmt.Sprintf(`{"5851": %d}`, brightness))
-			channel <- false
 			return
 		}
 
 		time.Sleep(300 * time.Millisecond)
 	}
-
-	channel <- true
 }
 
-func led(content *POSTContent, channel chan bool) {
-	err := changeBrightness(fmt.Sprintf(`/15001/%d`, content.Light), fmt.Sprintf(`{ "3311": [{ "5851": %d }]}`, content.Brightness))
-	if checkNonFatal(err) {
-		channel <- false
-		return
-	}
-
-	channel <- true
+func led(content *POSTContent) {
+	changeBrightness(fmt.Sprintf(`/15001/%d`, content.Light), fmt.Sprintf(`{ "3311": [{ "5851": %d }]}`, content.Brightness))
 }
 
-func group(content *POSTContent, channel chan bool) {
-	err := changeBrightness(fmt.Sprintf(`/15004/%d`, content.Group), fmt.Sprintf(`{ "5851": %d }`, content.Brightness))
-	if checkNonFatal(err) {
-		channel <- false
-		return
-	}
-
-	channel <- true
+func group(content *POSTContent) {
+	changeBrightness(fmt.Sprintf(`/15004/%d`, content.Group), fmt.Sprintf(`{ "5851": %d }`, content.Brightness))
 }
