@@ -16,30 +16,34 @@ Result initLightController(
     LightController* lightController, 
     const adc_channel_t channel, 
     const adc_oneshot_unit_handle_t* handle,
-    uint8_t amountOfLights,
     uint32_t* lights,
     bool isLight,
-    esp_http_client_handle_t httpClient
+    esp_http_client_handle_t* httpClient
 ) {
     initController(&lightController->controller, channel, handle);
 
-    lightController->lights = malloc(sizeof(Light) * amountOfLights);
+    lightController->amountOfLights = 0;
+    for (uint8_t i = 0; i < AMOUNT_OF_LIGHTS; i++) {
+        if (lights[i] != 0) {
+            lightController->amountOfLights++;
+        }
+    }
+
+    lightController->lights = malloc(sizeof(Light) * lightController->amountOfLights);
 
     if (lightController->lights == NULL) {
         ESP_LOGE(TAG, "Error allocating memory for Lights");
         return MEMORY_ISSUE;
     }
 
-    for (uint8_t i = 0; i < amountOfLights; i++) {
+    for (uint8_t i = 0; i < lightController->amountOfLights; i++) {
         initLight(&lightController->lights[i], isLight, lights[i], httpClient);
     }
 
-    lightController->amountOfLights = amountOfLights;
-    
     return OK;
 }
 
-void updateLightController(LightController* lightController) {
+Result updateLightController(LightController* lightController) {
     getNewAdc(&lightController->controller);
 
     if (
@@ -50,9 +54,18 @@ void updateLightController(LightController* lightController) {
         uint8_t newBrightness = convertAdcToLight(lightController->controller.adcRaw);
 
         for (uint8_t i = 0; i < lightController->amountOfLights; i++) {
-            updateBrightness(&lightController->lights[i], newBrightness);
+            Result result = updateBrightness(&lightController->lights[i], newBrightness);
+            if (result != OK) {
+                if (! wifiConnected) {
+                    return NO_WIFI;
+                } else {
+                    return result;
+                }
+            }
         }
     }
+
+    return OK;
 }
 
 void freeLightController(LightController* lightController) {

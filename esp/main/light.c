@@ -11,7 +11,7 @@ void initLight(
     Light* light, 
     bool isLight, 
     uint32_t id, 
-    esp_http_client_handle_t httpClient
+    esp_http_client_handle_t* httpClient
     ) {
     light->isLight = isLight;
     light->id = id;
@@ -33,30 +33,32 @@ Result updateBrightness(Light* light, uint8_t brightness) {
         return BRIGHTNESS_FAIL;
     }
 
-    esp_err_t err = esp_http_client_set_post_field(light->httpClient, data, sizeof(data));
+    esp_err_t err = esp_http_client_set_post_field(*light->httpClient, data, sizeof(data));
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error adding post field");
         return HTTP_FAIL;
     }
 
-    err = esp_http_client_perform(light->httpClient);
+    err = esp_http_client_perform(*light->httpClient);
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Error sending http request");
-        return HTTP_FAIL;
+        return HTTP_SEND_FAIL;
     }
 
     return OK;
 }
 
 Result makeHttpClient(esp_http_client_handle_t* client, char* url) {
+    ESP_LOGI(TAG, "Making http connection...");
+
     esp_http_client_config_t config = {
         .url = url,
     };
     *client = esp_http_client_init(&config);
 
-    if (*client == NULL) {
+    if (client == NULL) {
         ESP_LOGE(TAG, "Error creating http client light");
         return HTTP_FAIL;
     }
@@ -69,6 +71,8 @@ Result makeHttpClient(esp_http_client_handle_t* client, char* url) {
         ESP_LOGE(TAG, "Error setting fields for http client light");
         return HTTP_FAIL;
     }
+
+    ESP_LOGI(TAG, "Successful http connection");
 
     return OK;
 }

@@ -2,8 +2,9 @@
 #define GLOBALS_H
 
 #define TAG                         "Lights"    // Tag used in log messages
-#define AMOUNT_OF_LIGHT_CONTROLLERS 4
 #define WAIT_MS                     100
+#define POTENTIOMETERS              8
+#define AMOUNT_OF_LIGHTS            9
 
 #define WIFI_SSID                   "Zeus WPI"
 #define WIFI_PASSWORD               "zeusisdemax"
@@ -22,7 +23,9 @@ typedef enum Result {
     OK,
     MEMORY_ISSUE,
     HTTP_FAIL,
-    BRIGHTNESS_FAIL
+    HTTP_SEND_FAIL,
+    BRIGHTNESS_FAIL,
+    NO_WIFI
 } Result;
 
 #endif

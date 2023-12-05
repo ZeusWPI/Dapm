@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <unistd.h>
 
 #include <string.h>
 #include <sys/socket.h>
@@ -23,6 +24,27 @@ void wifiConnect();
 bool wifiConnected;
 
 void app_main(void) {
+    ESP_LOGI(TAG, "Starting up...");
+
+    uint32_t lights[POTENTIOMETERS][AMOUNT_OF_LIGHTS] = {
+        {65575},
+        {65560},
+        {65575, 65560}
+    };
+
+    adc_channel_t channels[POTENTIOMETERS] = {
+        ADC_CHANNEL_0,
+        ADC_CHANNEL_1,
+        ADC_CHANNEL_2
+    };
+
+    uint8_t lightsSize = 0;
+    for (uint8_t i = 0; i < POTENTIOMETERS; i++) {
+        if (lights[i][0] != 0) {
+            lightsSize++;
+        }
+    }
+
     // Required
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
@@ -37,7 +59,7 @@ void app_main(void) {
     }
 
     // Light Controller
-    LightController* lightControllers = malloc(sizeof(LightController) * AMOUNT_OF_LIGHT_CONTROLLERS);
+    LightController* lightControllers = malloc(sizeof(LightController) * lightsSize);
 
     if (lightControllers == NULL) {
         ESP_LOGE(TAG, "Error allocating memory for lightControllers");
@@ -66,65 +88,35 @@ void app_main(void) {
         abort();
     }
 
-    uint32_t lightOne[] = {65575};
-    uint32_t lightTwo[] = {65575};
-    uint32_t lightThree[] = {65575};
-    uint32_t lightFour[] = {65575};
-
-    // 1
-    initLightController(
-        &lightControllers[0],
-        ADC_CHANNEL_0,
-        &handle,
-        1,
-        lightOne,
-        true,
-        httpClientLight
-    );
-
-    // 2
-    initLightController(
-        &lightControllers[1],
-        ADC_CHANNEL_1,
-        &handle,
-        1,
-        lightTwo,
-        true,
-        httpClientLight
-    );
-
-    // 3
-    initLightController(
-        &lightControllers[2],
-        ADC_CHANNEL_2,
-        &handle,
-        1,
-        lightThree,
-        true,
-        httpClientLight
-    );
-
-    // 4
-    initLightController(
-        &lightControllers[3],
-        ADC_CHANNEL_3,
-        &handle,
-        1,
-        lightFour,
-        true,
-        httpClientGroup
-    );
+    for (uint8_t i = 0; i < lightsSize; i++) {
+        if (lights[i][0] != 0) {
+            initLightController(
+                &lightControllers[i],
+                channels[i],
+                &handle,
+                lights[i],
+                lights[i][0] < 1000000,
+                (lights[i][0] < 1000000) ? &httpClientLight : &httpClientGroup
+            );
+        }
+    }
 
     while (1) {
-        for (uint8_t i = 0; i < AMOUNT_OF_LIGHT_CONTROLLERS; i++) {
-            updateLightController(&(lightControllers[i]));
+        for (uint8_t i = 0; i < lightsSize; i++) {
+            Result result = updateLightController(&(lightControllers[i]));
+            if (result == HTTP_SEND_FAIL) {
+                makeHttpClient(&httpClientLight, LIGHT_URL);
+                makeHttpClient(&httpClientGroup, GROUP_URL);
+            } else if (result == NO_WIFI) {
+                wifiConnect();
+            }
         }
 
         vTaskDelay(pdMS_TO_TICKS(WAIT_MS));
     }
 
     // Clean everything up
-    for (uint8_t i = 0; i < AMOUNT_OF_LIGHT_CONTROLLERS; i++) {
+    for (uint8_t i = 0; i < lightsSize; i++) {
         freeLightController(&(lightControllers[i]));
     }
 

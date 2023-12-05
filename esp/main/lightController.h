@@ -21,15 +21,12 @@ Result initLightController(
     LightController* lightController,
     const adc_channel_t channel, 
     const adc_oneshot_unit_handle_t* handle,
-    uint8_t amountOfLights,
     uint32_t* lights,
     bool isLight,
-    esp_http_client_handle_t httpClient
+    esp_http_client_handle_t* httpClient
 );
 
-void updateLightController(LightController* lightController);
-
-Result makeHttpClient(esp_http_client_handle_t* client, char* url);
+Result updateLightController(LightController* lightController);
 
 void freeLightController(LightController* lightController);
 
