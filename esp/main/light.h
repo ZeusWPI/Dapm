@@ -9,15 +9,14 @@
 #include "globals.h"
 
 typedef struct Light {
-    bool isLight;
-    uint32_t id;
+    char* payload;
+    uint8_t payloadOffset;
     esp_http_client_handle_t* httpClient;
 } Light;
 
-void initLight(
+Result initLight(
     Light* light,
-    bool isLight,
-    uint32_t id,
+    uint32_t* ids,
     esp_http_client_handle_t* httpClient
 );
 

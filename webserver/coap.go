@@ -48,8 +48,6 @@ func changeBrightness(path string, payload string) (err error) {
 		bytes.NewReader([]byte(payload)),
 	)
 
-    // time.Sleep(200 * time.Millisecond)
-
 	globals.mu.Unlock()
 
 	return
@@ -133,7 +131,9 @@ func blink() {
 }
 
 func led(content *POSTContent) {
-	changeBrightness(fmt.Sprintf(`/15001/%d`, content.Light), fmt.Sprintf(`{ "3311": [{ "5851": %d }]}`, content.Brightness))
+	for _, light := range content.Lights {
+		changeBrightness(fmt.Sprintf(`/15001/%d`, light), fmt.Sprintf(`{ "3311": [{ "5851": %d }]}`, content.Brightness))
+	}
 }
 
 func group(content *POSTContent) {

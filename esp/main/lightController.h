@@ -13,16 +13,14 @@
 
 typedef struct LightController {
     Controller controller;
-    Light* lights;
-    uint8_t amountOfLights;
+    Light light;
 } LightController;
 
-Result initLightController(
+void initLightController(
     LightController* lightController,
     const adc_channel_t channel, 
     const adc_oneshot_unit_handle_t* handle,
     uint32_t* lights,
-    bool isLight,
     esp_http_client_handle_t* httpClient
 );
 

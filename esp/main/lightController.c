@@ -12,35 +12,15 @@
 
 uint8_t convertAdcToLight(int adc);
 
-Result initLightController(
+void initLightController(
     LightController* lightController, 
     const adc_channel_t channel, 
     const adc_oneshot_unit_handle_t* handle,
     uint32_t* lights,
-    bool isLight,
     esp_http_client_handle_t* httpClient
 ) {
     initController(&lightController->controller, channel, handle);
-
-    lightController->amountOfLights = 0;
-    for (uint8_t i = 0; i < AMOUNT_OF_LIGHTS; i++) {
-        if (lights[i] != 0) {
-            lightController->amountOfLights++;
-        }
-    }
-
-    lightController->lights = malloc(sizeof(Light) * lightController->amountOfLights);
-
-    if (lightController->lights == NULL) {
-        ESP_LOGE(TAG, "Error allocating memory for Lights");
-        return MEMORY_ISSUE;
-    }
-
-    for (uint8_t i = 0; i < lightController->amountOfLights; i++) {
-        initLight(&lightController->lights[i], isLight, lights[i], httpClient);
-    }
-
-    return OK;
+    initLight(&lightController->light, lights, httpClient);
 }
 
 Result updateLightController(LightController* lightController) {
@@ -53,14 +33,12 @@ Result updateLightController(LightController* lightController) {
         lightController->controller.previousAdc = lightController->controller.adcRaw;
         uint8_t newBrightness = convertAdcToLight(lightController->controller.adcRaw);
 
-        for (uint8_t i = 0; i < lightController->amountOfLights; i++) {
-            Result result = updateBrightness(&lightController->lights[i], newBrightness);
-            if (result != OK) {
-                if (! wifiConnected) {
-                    return NO_WIFI;
-                } else {
-                    return result;
-                }
+        Result result = updateBrightness(&lightController->light, newBrightness);
+        if (result != OK) {
+            if (! wifiConnected) {
+                return NO_WIFI;
+            } else {
+                return result;
             }
         }
     }
@@ -70,6 +48,7 @@ Result updateLightController(LightController* lightController) {
 
 void freeLightController(LightController* lightController) {
     freeController(&lightController->controller);
+    freeLight(&lightController->light);
 
     free(lightController);
 }

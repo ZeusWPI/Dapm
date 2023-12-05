@@ -29,13 +29,15 @@ void app_main(void) {
     uint32_t lights[POTENTIOMETERS][AMOUNT_OF_LIGHTS] = {
         {65575},
         {65560},
-        {65575, 65560}
+        {65575, 65560},
+        {131077}
     };
 
     adc_channel_t channels[POTENTIOMETERS] = {
         ADC_CHANNEL_0,
         ADC_CHANNEL_1,
-        ADC_CHANNEL_2
+        ADC_CHANNEL_2,
+        ADC_CHANNEL_3
     };
 
     uint8_t lightsSize = 0;
@@ -95,8 +97,7 @@ void app_main(void) {
                 channels[i],
                 &handle,
                 lights[i],
-                lights[i][0] < 1000000,
-                (lights[i][0] < 1000000) ? &httpClientLight : &httpClientGroup
+                (lights[i][0] < 100000) ? &httpClientLight : &httpClientGroup
             );
         }
     }

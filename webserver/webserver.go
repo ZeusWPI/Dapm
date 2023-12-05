@@ -7,7 +7,7 @@ import (
 )
 
 type POSTContent struct {
-	Light      int
+	Lights     []int
 	Group      int
 	Brightness int
 }
@@ -36,8 +36,6 @@ func errorValidation(w http.ResponseWriter, r *http.Request) (POSTContent, bool)
 		w.Write([]byte(http.StatusText(http.StatusUnsupportedMediaType)))
 		return POSTContent{}, false
 	}
-
-    log.Println(content)
 
 	return content, true
 }
