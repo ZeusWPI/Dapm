@@ -7,8 +7,9 @@
     "coap_random_led": "/15001/65561",
     "coap_retries": 3,
 
-    "blink_multiplier": 0.7,
+    "blink_multiplier": 0.1,
     "blink_amount": 2,
+    "blink_cut_off": 127,
 
     "web_port": "8080"
 }

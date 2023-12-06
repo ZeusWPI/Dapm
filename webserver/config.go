@@ -15,6 +15,7 @@ type Configuration struct {
 	CoapRetries     int     `json:"coap_retries"`
 	BlinkMultiplier float64 `json:"blink_multiplier"`
 	BlinkAmount     int     `json:"blink_amount"`
+	BlinkCutOff     int     `json:"blink_cut_off"`
 	WebPort         string  `json:"web_port"`
 }
 

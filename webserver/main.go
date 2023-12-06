@@ -5,12 +5,12 @@ import (
 	"log"
 	"sync"
 
-	udpClient "github.com/plgd-dev/go-coap/v3/udp/client"
+	"github.com/plgd-dev/go-coap/v3/udp/client"
 )
 
 type SafeGlobals struct {
 	mu   sync.Mutex
-	conn *udpClient.Conn
+	conn *client.Conn
 	ctx  context.Context
 }
 

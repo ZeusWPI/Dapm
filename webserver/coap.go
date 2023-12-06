@@ -13,10 +13,10 @@ import (
 	piondtls "github.com/pion/dtls/v2"
 	"github.com/plgd-dev/go-coap/v3/dtls"
 	"github.com/plgd-dev/go-coap/v3/message"
-	udpClient "github.com/plgd-dev/go-coap/v3/udp/client"
+	"github.com/plgd-dev/go-coap/v3/udp/client"
 )
 
-func initCoap() (conn *udpClient.Conn) {
+func initCoap() (conn *client.Conn) {
 	address := concatStrings(conf.CoapIp, ":", conf.CoapPort)
 
 	var err error
@@ -33,7 +33,7 @@ func initCoap() (conn *udpClient.Conn) {
 }
 
 func initContext() (ctx context.Context) {
-	ctx = context.WithoutCancel(context.Background())
+	ctx = context.Background()
 
 	return
 }
@@ -41,8 +41,11 @@ func initContext() (ctx context.Context) {
 func changeBrightness(path string, payload string) (err error) {
 	globals.mu.Lock()
 
+	ctx, cancel := context.WithTimeout(globals.ctx, time.Second)
+	defer cancel()
+
 	_, err = globals.conn.Put(
-		globals.ctx,
+		ctx,
 		path,
 		message.AppJSON,
 		bytes.NewReader([]byte(payload)),
@@ -110,8 +113,15 @@ func blink() {
 		return
 	}
 
+	var newBrightness int
+	if brightness < conf.BlinkCutOff {
+		newBrightness = int(254 -  (float64(brightness) * conf.BlinkMultiplier))
+	} else {
+		newBrightness = int(float64(brightness) * conf.BlinkMultiplier)
+	}
+
 	for i := 0; i < conf.BlinkAmount; i++ {
-		err := changeBrightness(conf.CoapKelder, fmt.Sprintf(`{"5851": %d}`, int(float64(brightness)*conf.BlinkMultiplier)))
+		err := changeBrightness(conf.CoapKelder, fmt.Sprintf(`{"5851": %d}`, newBrightness))
 
 		if checkNonFatal(err) {
 			changeBrightnessRetries(conf.CoapKelder, fmt.Sprintf(`{"5851": %d}`, brightness))
@@ -119,7 +129,7 @@ func blink() {
 		}
 
 		time.Sleep(300 * time.Millisecond)
-		changeBrightness(conf.CoapKelder, fmt.Sprintf(`{"5851": %d}`, brightness))
+		err = changeBrightness(conf.CoapKelder, fmt.Sprintf(`{"5851": %d}`, brightness))
 
 		if checkNonFatal(err) {
 			changeBrightnessRetries(conf.CoapKelder, fmt.Sprintf(`{"5851": %d}`, brightness))
