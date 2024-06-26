@@ -2,50 +2,28 @@
 #include <unistd.h>
 
 #include <string.h>
-#include <sys/socket.h>
-#include <netdb.h>
 #include <sys/param.h>
 
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
-#include "esp_adc/adc_oneshot.h"
-#include "esp_http_client.h"
 
 #include "nvs_flash.h"
 
 #include "globals.h"
-#include "lightController.h"
 
+const static char* TAG = "main";
 
 void wifiEventHandler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
 void wifiConnect();
 
-bool wifiConnected;
+bool wifiConnected = false;
+
+void adc_task(void * pvParameters);
+void http_task(void * pvParameters);
 
 void app_main(void) {
     ESP_LOGI(TAG, "Starting up...");
-
-    uint32_t lights[POTENTIOMETERS][AMOUNT_OF_LIGHTS] = {
-        {65575},
-        {65560},
-        {65575, 65560},
-        {131077}
-    };
-
-    adc_channel_t channels[POTENTIOMETERS] = {
-        ADC_CHANNEL_0,
-        ADC_CHANNEL_1,
-        ADC_CHANNEL_2,
-        ADC_CHANNEL_3
-    };
-
-    uint8_t lightsSize = 0;
-    for (uint8_t i = 0; i < POTENTIOMETERS; i++) {
-        if (lights[i][0] != 0) {
-            lightsSize++;
-        }
-    }
 
     // Required
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -53,76 +31,29 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     // Connect to wifi
-    wifiConnected = false;
     wifiConnect();
 
     while (! wifiConnected) {
-        sleep(1);
+        vTaskDelay(10);
     }
+    ESP_LOGI(TAG, "connected to wifi");
 
-    // Light Controller
-    LightController* lightControllers = malloc(sizeof(LightController) * lightsSize);
-
-    if (lightControllers == NULL) {
-        ESP_LOGE(TAG, "Error allocating memory for lightControllers");
-        abort();
-    }
-
-    // Controller
-    adc_oneshot_unit_handle_t   handle;
-    adc_oneshot_unit_init_cfg_t init_cfg = {
-        .unit_id = ADC_UNIT_1
-    };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_cfg, &handle));
-
-    // Light
-    esp_http_client_handle_t httpClientLight;
-    Result result = makeHttpClient(&httpClientLight, LIGHT_URL);
-
-    if (result != OK) {
-        abort();
-    }
-
-    esp_http_client_handle_t httpClientGroup;
-    result = makeHttpClient(&httpClientGroup, GROUP_URL);
-
-    if (result != OK) {
-        abort();
-    }
-
-    for (uint8_t i = 0; i < lightsSize; i++) {
-        if (lights[i][0] != 0) {
-            initLightController(
-                &lightControllers[i],
-                channels[i],
-                &handle,
-                lights[i],
-                (lights[i][0] < 100000) ? &httpClientLight : &httpClientGroup
-            );
-        }
-    }
-
-    while (1) {
-        for (uint8_t i = 0; i < lightsSize; i++) {
-            Result result = updateLightController(&(lightControllers[i]));
-            if (result == HTTP_SEND_FAIL) {
-                makeHttpClient(&httpClientLight, LIGHT_URL);
-                makeHttpClient(&httpClientGroup, GROUP_URL);
-            } else if (result == NO_WIFI) {
-                wifiConnect();
-            }
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(WAIT_MS));
-    }
-
-    // Clean everything up
-    for (uint8_t i = 0; i < lightsSize; i++) {
-        freeLightController(&(lightControllers[i]));
-    }
-
-    esp_http_client_cleanup(httpClientLight);
-    esp_http_client_cleanup(httpClientGroup);
+    xTaskCreate(
+        adc_task,        // Function that should be called
+        "adc",           // Name of the task (for debugging)
+        4096,            // Stack size (bytes)
+        NULL,            // Parameter to pass
+        1,               // Task priority
+        NULL             // Task handle
+    );
+    xTaskCreate(
+        http_task,       // Function that should be called
+        "http",          // Name of the task (for debugging)
+        4096,            // Stack size (bytes)
+        NULL,            // Parameter to pass
+        1,               // Task priority
+        NULL             // Task handle
+    );
 }
 
 void wifiEventHandler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,void *event_data) {

@@ -1,2 +1,2 @@
-idf_component_register(SRCS "main.c" "controller.c" "lightController.c" "light.c"
+idf_component_register(SRCS "adc_task.c" "main.c" "http_task.c"
                     INCLUDE_DIRS ".")
